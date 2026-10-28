@@ -1,51 +1,110 @@
-import { criarPool } from '../config/database.js';
 
-const pool = criarPool();
-const campos = 'id, titulo, descricao, categoria, data_evento, horario, local, organizador, imagem_url, status, criado_em';
+let eventos = [];
+let proximoId = 1;
 
-export async function listar({ busca = '', categoria = '', status = '', pagina = 1, limite = 10 } = {}) {
-  const filtros = [];
-  const valores = [];
-  if (busca) {
-    filtros.push('(titulo LIKE ? OR descricao LIKE ? OR local LIKE ? OR organizador LIKE ?)');
-    valores.push(...Array(4).fill(`%${busca}%`));
-  }
-  if (categoria) { filtros.push('categoria = ?'); valores.push(categoria); }
-  if (status) { filtros.push('status = ?'); valores.push(status); }
-  const where = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
-  const [totalRows] = await pool.execute(`SELECT COUNT(*) AS total FROM eventos_ciencias ${where}`, valores);
-  const offset = (pagina - 1) * limite;
-  const [eventos] = await pool.execute(`SELECT ${campos} FROM eventos_ciencias ${where} ORDER BY data_evento ASC LIMIT ? OFFSET ?`, [...valores, limite, offset]);
-  return { eventos, total: totalRows[0].total };
+const camposAtualizaveis = [
+  'titulo',
+  'descricao',
+  'categoria',
+  'data_evento',
+  'horario',
+  'local',
+  'organizador',
+  'imagem_url',
+  'status'
+];
+
+export async function listar({
+  busca = '',
+  categoria = '',
+  status = '',
+  pagina = 1,
+  limite = 10
+} = {}) {
+  const termo = String(busca).toLowerCase();
+
+  let resultado = eventos.filter((evento) => {
+    const correspondeBusca =
+      !termo ||
+      [evento.titulo, evento.descricao, evento.local, evento.organizador]
+        .some((valor) => String(valor || '').toLowerCase().includes(termo));
+
+    const correspondeCategoria =
+      !categoria || evento.categoria === categoria;
+
+    const correspondeStatus =
+      !status || evento.status === status;
+
+    return correspondeBusca && correspondeCategoria && correspondeStatus;
+  });
+
+  resultado.sort((a, b) =>
+    String(a.data_evento).localeCompare(String(b.data_evento))
+  );
+
+  const total = resultado.length;
+  const paginaAtual = Math.max(1, Number(pagina) || 1);
+  const limiteAtual = Math.max(1, Number(limite) || 10);
+  const inicio = (paginaAtual - 1) * limiteAtual;
+
+  resultado = resultado.slice(inicio, inicio + limiteAtual);
+
+  return { eventos: resultado, total };
 }
 
 export async function buscarPorId(id) {
-  const [rows] = await pool.execute(`SELECT ${campos} FROM eventos_ciencias WHERE id = ?`, [id]);
-  return rows[0] || null;
+  return eventos.find((evento) => evento.id === Number(id)) || null;
 }
 
 export async function criar(dados) {
-  const { titulo, descricao, categoria, data_evento, horario = null, local, organizador = null, imagem_url = null, status = 'agendado' } = dados;
-  const [result] = await pool.execute(
-    'INSERT INTO eventos_ciencias (titulo, descricao, categoria, data_evento, horario, local, organizador, imagem_url, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [titulo, descricao, categoria, data_evento, horario, local, organizador, imagem_url, status]
-  );
-  return buscarPorId(result.insertId);
+  const evento = {
+    id: proximoId++,
+    titulo: dados.titulo,
+    descricao: dados.descricao,
+    categoria: dados.categoria,
+    data_evento: dados.data_evento,
+    horario: dados.horario || null,
+    local: dados.local,
+    organizador: dados.organizador || null,
+    imagem_url: dados.imagem_url || null,
+    status: dados.status || 'agendado',
+    criado_em: new Date().toISOString()
+  };
+
+  eventos.push(evento);
+
+  return evento;
 }
 
 export async function atualizar(id, dados) {
-  const atual = await buscarPorId(id);
-  if (!atual) return null;
-  const camposAtualizaveis = ['titulo', 'descricao', 'categoria', 'data_evento', 'horario', 'local', 'organizador', 'imagem_url', 'status'];
-  const atualizados = { ...atual, ...Object.fromEntries(Object.entries(dados).filter(([chave]) => camposAtualizaveis.includes(chave))) };
-  await pool.execute(
-    'UPDATE eventos_ciencias SET titulo=?, descricao=?, categoria=?, data_evento=?, horario=?, local=?, organizador=?, imagem_url=?, status=? WHERE id=?',
-    [atualizados.titulo, atualizados.descricao, atualizados.categoria, atualizados.data_evento, atualizados.horario || null, atualizados.local, atualizados.organizador || null, atualizados.imagem_url || null, atualizados.status, id]
+  const indice = eventos.findIndex(
+    (evento) => evento.id === Number(id)
   );
-  return buscarPorId(id);
+
+  if (indice === -1) return null;
+
+  const atualizados = Object.fromEntries(
+    Object.entries(dados).filter(([chave]) =>
+      camposAtualizaveis.includes(chave)
+    )
+  );
+
+  eventos[indice] = {
+    ...eventos[indice],
+    ...atualizados
+  };
+
+  return eventos[indice];
 }
 
 export async function excluir(id) {
-  const [result] = await pool.execute('DELETE FROM eventos_ciencias WHERE id = ?', [id]);
-  return result.affectedRows > 0;
+  const indice = eventos.findIndex(
+    (evento) => evento.id === Number(id)
+  );
+
+  if (indice === -1) return false;
+
+  eventos.splice(indice, 1);
+
+  return true;
 }

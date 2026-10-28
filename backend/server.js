@@ -1,10 +1,11 @@
+
 import { carregarAmbiente } from './config/ambiente.js';
 
-const config = carregarAmbiente('.env');
+const config = carregarAmbiente();
 
 const { app } = await import('./app.js');
-const porta = config.porta || 3000;
+const porta = config.porta || 3001;
 
 app.listen(porta, () => {
-    console.log(`Servidor rodando em http://localhost:${porta}`);
+  console.log(`Natura — Eventos de Ciências rodando em http://localhost:${porta}`);
 });

@@ -1,2 +1,285 @@
 "use client";
-import Link from "next/link";import {useState} from "react";const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:3001/api";const initial={titulo:"",descricao:"",categoria:"Biologia",data_evento:"",horario:"",local:"",organizador:"",imagem_url:"",status:"agendado"};export default function Admin(){const [f,setF]=useState(initial),[msg,setMsg]=useState(""),[error,setError]=useState(false),[busy,setBusy]=useState(false);function change(e){setF({...f,[e.target.name]:e.target.value})}async function submit(e){e.preventDefault();setBusy(true);setMsg("");try{const r=await fetch(`${API}/eventos`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(f)});const j=await r.json();if(!r.ok||!j.sucesso)throw Error(j.erro||"Não foi possível salvar o evento.");setMsg("Evento publicado com sucesso! Ele já está disponível na agenda.");setError(false);setF(initial)}catch(err){setMsg(err.message.includes('fetch')?"Não foi possível conectar à API. Confira se o backend está rodando e tente novamente.":err.message);setError(true)}finally{setBusy(false)}}return <><header className="topbar"><Link href="/" className="brand"><span className="brand-icon">✳</span><span>NATURA<small>CIÊNCIA EM MOVIMENTO</small></span></Link><nav><Link href="/">Início</Link><Link href="/eventos">Agenda</Link><Link href="/sobre">Sobre</Link></nav><Link className="mobile-menu" href="/">←</Link></header><section className="page-hero"><div className="eyebrow">COMPARTILHE CONHECIMENTO</div><h1>Publique uma<br/><em style={{color:'#d9f36a',fontFamily:'Georgia',fontWeight:400}}>nova descoberta.</em></h1><p>Divulgue uma oficina, encontro ou experiência científica para nossa comunidade.</p></section><main className="admin-wrap"><h1>Detalhes do evento</h1><p>Preencha as informações abaixo para adicionar seu evento à agenda Natura. Os campos com * são obrigatórios.</p><form className="form-card" onSubmit={submit}><div className="form-grid"><div className="field full"><label>Título do evento *</label><input required name="titulo" value={f.titulo} onChange={change} placeholder="Ex.: Oficina de astronomia para iniciantes"/></div><div className="field"><label>Categoria *</label><select name="categoria" value={f.categoria} onChange={change}>{["Biologia","Física","Química","Ciências da Terra","Astronomia","Meio Ambiente","Multidisciplinar"].map(c=><option key={c}>{c}</option>)}</select></div><div className="field"><label>Organizador</label><input name="organizador" value={f.organizador} onChange={change} placeholder="Nome da instituição ou pessoa"/></div><div className="field"><label>Data *</label><input type="date" required name="data_evento" value={f.data_evento} onChange={change}/></div><div className="field"><label>Horário</label><input type="time" name="horario" value={f.horario} onChange={change}/></div><div className="field full"><label>Local *</label><input required name="local" value={f.local} onChange={change} placeholder="Endereço, instituição ou formato online"/></div><div className="field full"><label>URL da imagem</label><input type="url" name="imagem_url" value={f.imagem_url} onChange={change} placeholder="https://..."/></div><div className="field full"><label>Descrição *</label><textarea required name="descricao" value={f.descricao} onChange={change} placeholder="Conte o que os participantes vão descobrir e vivenciar..."/></div></div><div className="form-actions"><button className="button button-dark" disabled={busy}>{busy?"Publicando...":"Publicar evento ↗"}</button><Link href="/eventos" className="text-link">Ver agenda</Link></div>{msg&&<div className={`notice ${error?'error':''}`}>{msg}</div>}</form><p style={{fontSize:11,marginTop:18}}>A publicação depende da API e do banco de dados estarem configurados corretamente.</p></main><footer className="footer"><Link href="/" className="brand footer-brand"><span className="brand-icon">✳</span><span>NATURA<small>CIÊNCIA EM MOVIMENTO</small></span></Link><div><Link href="/eventos">Eventos</Link><Link href="/sobre">Sobre</Link></div><small>© 2026 Natura.</small></footer></>}
+
+import Link from "next/link";
+import { useState } from "react";
+
+const API =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+
+const initial = {
+  titulo: "",
+  descricao: "",
+  categoria: "Biologia",
+  data_evento: "",
+  horario: "",
+  local: "",
+  organizador: "",
+  imagem_url: "",
+  status: "agendado",
+};
+
+export default function Admin() {
+  const [f, setF] = useState(initial);
+  const [msg, setMsg] = useState("");
+  const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  function change(e) {
+    setF({
+      ...f,
+      [e.target.name]: e.target.value,
+    });
+  }
+
+  async function submit(e) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg("");
+
+    try {
+      const r = await fetch(`${API}/eventos`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(f),
+      });
+
+      const j = await r.json();
+
+      if (!r.ok || !j.sucesso) {
+        throw Error(
+          j.erro || "Não foi possível salvar o evento."
+        );
+      }
+
+      setMsg(
+        "Evento publicado com sucesso! Ele já está disponível na agenda."
+      );
+
+      setError(false);
+      setF(initial);
+    } catch (err) {
+      setMsg(
+        err.message.includes("fetch")
+          ? "Não foi possível conectar à API. Confira se o backend está rodando e tente novamente."
+          : err.message
+      );
+
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <header className="topbar">
+        <Link href="/" className="brand">
+          <span className="brand-icon">✳</span>
+
+          <span>
+            NATURA
+            <small>CIÊNCIA EM MOVIMENTO</small>
+          </span>
+        </Link>
+
+        <nav>
+          <Link href="/">Início</Link>
+          <Link href="/eventos">Agenda</Link>
+          <Link href="/sobre">Sobre</Link>
+        </nav>
+
+        <Link className="mobile-menu" href="/">
+          ←
+        </Link>
+      </header>
+
+      <section className="page-hero">
+        <div className="eyebrow">
+          COMPARTILHE CONHECIMENTO
+        </div>
+
+        <h1>
+          Publique uma
+          <br />
+          <em
+            style={{
+              color: "#d9f36a",
+              fontFamily: "Georgia",
+              fontWeight: 400,
+            }}
+          >
+            nova descoberta.
+          </em>
+        </h1>
+
+        <p>
+          Divulgue uma oficina, encontro ou experiência científica
+          para nossa comunidade.
+        </p>
+      </section>
+
+      <main className="admin-wrap">
+        <h1>Detalhes do evento</h1>
+
+        <p>
+          Preencha as informações abaixo para adicionar seu evento
+          à agenda Natura. Os campos com * são obrigatórios.
+        </p>
+
+        <form className="form-card" onSubmit={submit}>
+          <div className="form-grid">
+            <div className="field full">
+              <label>Título do evento *</label>
+
+              <input
+                required
+                name="titulo"
+                value={f.titulo}
+                onChange={change}
+                placeholder="Ex.: Oficina de astronomia para iniciantes"
+              />
+            </div>
+
+            <div className="field">
+              <label>Categoria *</label>
+
+              <select
+                name="categoria"
+                value={f.categoria}
+                onChange={change}
+              >
+                {[
+                  "Biologia",
+                  "Física",
+                  "Química",
+                  "Ciências da Terra",
+                  "Astronomia",
+                  "Meio Ambiente",
+                  "Multidisciplinar",
+                ].map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field">
+              <label>Organizador</label>
+
+              <input
+                name="organizador"
+                value={f.organizador}
+                onChange={change}
+                placeholder="Nome da instituição ou pessoa"
+              />
+            </div>
+
+            <div className="field">
+              <label>Data *</label>
+
+              <input
+                type="date"
+                required
+                name="data_evento"
+                value={f.data_evento}
+                onChange={change}
+              />
+            </div>
+
+            <div className="field">
+              <label>Horário</label>
+
+              <input
+                type="time"
+                name="horario"
+                value={f.horario}
+                onChange={change}
+              />
+            </div>
+
+            <div className="field full">
+              <label>Local *</label>
+
+              <input
+                required
+                name="local"
+                value={f.local}
+                onChange={change}
+                placeholder="Endereço, instituição ou formato online"
+              />
+            </div>
+
+            <div className="field full">
+              <label>URL da imagem</label>
+
+              <input
+                type="url"
+                name="imagem_url"
+                value={f.imagem_url}
+                onChange={change}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="field full">
+              <label>Descrição *</label>
+
+              <textarea
+                required
+                name="descricao"
+                value={f.descricao}
+                onChange={change}
+                placeholder="Conte o que os participantes vão descobrir e vivenciar..."
+              />
+            </div>
+          </div>
+
+          <div className="form-actions">
+            <button
+              className="button button-dark"
+              disabled={busy}
+            >
+              {busy
+                ? "Publicando..."
+                : "Publicar evento ↗"}
+            </button>
+
+            <Link href="/eventos" className="text-link">
+              Ver agenda
+            </Link>
+          </div>
+
+          {msg && (
+            <div className={`notice ${error ? "error" : ""}`}>
+              {msg}
+            </div>
+          )}
+        </form>
+
+        <p style={{ fontSize: 11, marginTop: 18 }}>
+          A publicação depende da API e do banco de dados estarem
+          configurados corretamente.
+        </p>
+      </main>
+
+      <footer className="footer">
+        <Link href="/" className="brand footer-brand">
+          <span className="brand-icon">✳</span>
+
+          <span>
+            NATURA
+            <small>CIÊNCIA EM MOVIMENTO</small>
+          </span>
+        </Link>
+
+        <div>
+          <Link href="/eventos">Eventos</Link>
+          <Link href="/sobre">Sobre</Link>
+        </div>
+
+        <small>© 2026 Natura.</small>
+      </footer>
+    </>
+  );
+}
